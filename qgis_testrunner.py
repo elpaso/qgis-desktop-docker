@@ -40,7 +40,6 @@
 *                                                                         *
 ***************************************************************************
 """
-from __future__ import print_function
 
 __author__ = 'Alessandro Pasotti'
 __date__ = 'May 2016'
@@ -55,8 +54,8 @@ from pipes import quote
 
 from qgis.utils import iface
 
-def eprint(*args, **kwargs):
-    print(*args, file=sys.__stderr__, **kwargs)
+def eprint(text):
+    sys.__stderr__.write(text + "\n")
 
 def __get_test_function(test_module_name):
     """
@@ -92,6 +91,7 @@ if iface is None:
         me = __file__
     except NameError:
         me = sys.argv[0]
+    os.environ['QGIS_DEBUG'] = '1'
     args = [
         'qgis',
         os.environ.get('QGIS_EXTRA_OPTIONS', ''),
@@ -104,18 +104,21 @@ if iface is None:
     command_line = ' '.join(args)
     print("QGIS Test Runner - launching QGIS as %s ..." % command_line)
     out, returncode = run("sh -c " + quote(command_line), withexitstatus=1)
-    print("QGIS Test Runner - QGIS exited with returncode: %s" % returncode)
+    assert returncode is not None
+    print("QGIS Test Runner - QGIS exited.")
     ok = out.find('(failures=') < 0 and \
         len(re.findall(r'Ran \d+ tests in\s',
                        out, re.MULTILINE)) > 0
+    print('='*60)
     if not ok:
-        eprint(out)
-    else:
         print(out)
+    else:
+        eprint(out)
     if len(out) == 0:
         print("QGIS Test Runner - [WARNING] subprocess returned no output")
+    print('='*60)
 
-    print("QGIS Test Runner - finished with exit code: %s" % (0 if ok else returncode))
+    print("QGIS Test Runner - %s bytes returned and finished with exit code: %s" % (len(out), 0 if ok else 1))
     sys.exit(0 if ok else 1)
 
 else: # We are inside QGIS!

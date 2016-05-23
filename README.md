@@ -1,9 +1,9 @@
 qgis-desktop-docker
 ============================
 
-This is a simple container for testing QGIS Desktop
+This is a simple container for testing QGIS Desktop and for
+executing unit tests inside a real QGIS instance.
 
-**Note** this is not intended to be used in production
 
 # Features
 
@@ -12,7 +12,7 @@ repositories and a python script to run unit tests inside QGIS.
 
 You can use this docker to test QGIS or to run unit tests inside QGIS,
 xvfb is available and running as a service inside the container to allow
-for fully automated headless testing.
+for fully automated headless testing in Travis CI jobs.
 
 
 # Building
@@ -20,29 +20,32 @@ for fully automated headless testing.
 You can build the image with:
 
 ```
-# Place your IP address here, if you want to use apt-catcher, or comment
-# it out in the Dockerfile
+# Place your IP address here, if you want to use apt-catcher note that APT
+# catcher is not enabled by default, in order to enable it, you should
+# uncomment two lines in the docker file (see comments in Dockerfile).
 $ export ADDR=192.168.1.1
-$ docker build -t docker-qgis-desktop --build-arg APT_CATCHER_IP=$ADDR .
+$ docker build -t qgis-desktop --build-arg APT_CATCHER_IP=$ADDR .
 ```
 
-# Running
+# Running QGIS
 
 To run a container, assuming that you want to use your current display to use
-QGIS:
+QGIS and the image is named `qgis-desktop`:
 
 ```
 # Allow connections from any host
 $ xhost +
 $ docker run --rm  -it --name qgis_desktop -v /tmp/.X11-unix:/tmp/.X11-unix  \
-    -e DISPLAY=unix$DISPLAY elpaso/qgis-desktop:2.14 qgis
+    -e DISPLAY=unix$DISPLAY qgis-desktop qgis
 ```
+
+# Running unit tests inside QGIS
 
 Suppose that you have local directoty containing the tests to execute into
 QGIS:
 
 ```
-my_tests/travis_tests/
+/my_tests/travis_tests/
 ├── faketest.py
 ├── __init__.py
 ├── tclass.py
@@ -56,14 +59,15 @@ that is accessible by the container.
 
 ```
 $ docker run -d --name qgis-desktop -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v /my_tests/:/tests_directory -e DISPLAY=:99 elpaso/qgis-desktop:2.14
+    -v /my_tests/:/tests_directory -e DISPLAY=:99 qgis-desktop
 
 ```
 
-When done, you can invoke the test runnner (output follows):
-```
-$ docker exec -it qgis-desktop sh -c "cd /tests_directory && qgis_testrunner.py travis_tests.test_TravisTest"
+When done, you can invoke the test runnner (output follows, the failure is
+expected):
 
+```
+$ docker exec -it qgis-desktop sh -c "qgis_testrunner.sh travis_tests.test_TravisTest.run_fail"
 QGIS Test Runner - Trying to import travis_tests.test_TravisTest
 QGIS Test Runner - launching QGIS as qgis --optionspath /qgishome --nologo --noversioncheck --code /usr/bin/qgis_testrunner.py travis_tests.test_TravisTest ...
 QGIS Test Runner - QGIS exited with returncode: 143
@@ -94,10 +98,15 @@ AssertionError: 'B' != ''
 Ran 4 tests in 0.001s
 
 FAILED (failures=1)
-Terminated
 ```
 
+## Options for the test runner
 
+The env var `QGIS_EXTRA_OPTIONS` defaults to
+```
+ENV QGIS_EXTRA_OPTIONS="--optionspath /qgishome"
+```
+contains extra parameters that are passed to QGIS by the test runner.
 
-------------------
-Alessandro Pasotti
+The purpose of `/qgishome` is to contain a QGIS settings file that disables
+startup tips modal dialog.

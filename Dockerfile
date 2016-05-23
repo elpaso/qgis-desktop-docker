@@ -1,14 +1,14 @@
 FROM ubuntu:trusty
-MAINTAINER Alessandro Pasotti<apasotti@itopen.it>
+MAINTAINER Alessandro Pasotti<apasotti@boundlessgeo.com>
 
-ARG APT_CATCHER_IP=localhost
 
 # Use apt-catcher-ng caching
 # Use local cached debs from host to save your bandwidth and speed thing up.
 # APT_CATCHER_IP can be changed passing an argument to the build script:
 # --build-arg APT_CATCHER_IP=xxx.xxx.xxx.xxx,
-# set the IP to that of your apt-cacher-ng host or comment this line out
-# if you do not want to use caching
+# set the IP to that of your apt-cacher-ng host or comment the following 2 lines
+# out if you do not want to use caching
+ARG APT_CATCHER_IP=localhost
 RUN  echo 'Acquire::http { Proxy "http://'${APT_CATCHER_IP}':3142"; };' >> /etc/apt/apt.conf.d/01proxy
 
 
@@ -26,7 +26,8 @@ RUN apt-get install -y \
     xvfb \
     python-pip \
     python-dev \
-    supervisor
+    supervisor \
+    expect-dev
 
 # Add install script
 ADD requirements.txt /usr/local/requirements.txt
@@ -38,12 +39,16 @@ RUN /usr/local/bin/install.sh
 COPY qgishome /qgishome
 
 # Add QGIS test runner
+ENV QGIS_EXTRA_OPTIONS="--optionspath /qgishome"
 ADD qgis_testrunner.py /usr/bin/qgis_testrunner.py
 RUN chmod +x /usr/bin/qgis_testrunner.py
+ADD qgis_testrunner.sh /usr/bin/qgis_testrunner.sh
+RUN chmod +x /usr/bin/qgis_testrunner.sh
 
 
 # Add start script
 ADD supervisord.conf /etc/supervisor/
 ADD supervisor.xvfb.conf /etc/supervisor/supervisor.d/
+
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
