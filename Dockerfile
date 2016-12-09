@@ -14,7 +14,8 @@ MAINTAINER Alessandro Pasotti<apasotti@boundlessgeo.com>
 # Add repository for QGIS
 ADD debian-gis.list /etc/apt/sources.list.d/debian-gis.list
 # Add the signing key
-RUN sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key 3FF5FFCAD71472C4
+# from https://www.qgis.org/en/site/forusers/alldownloads.html
+RUN sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key 073D307A618E5811
 
 # Install required dependencies and QGIS itself
 RUN apt-get -y update
