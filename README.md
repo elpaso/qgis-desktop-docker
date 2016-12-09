@@ -1,3 +1,23 @@
+
+
+
+# This repository will be removed, see https://github.com/boundlessgeo/qgis-testing-environment-docker for the new one.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
 qgis-desktop-docker
 ============================
 
